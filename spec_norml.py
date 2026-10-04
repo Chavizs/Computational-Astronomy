@@ -32,7 +32,7 @@ def norm_lin(wave, flux, lim_inf_spec, lim_sup_spec):
         too_far=np.argmax(work) 
         survivor[too_far] = 0
         work[too_far]=0
-        if np.sum(survivor) < 3:
+        if np.sum(survivor) <= 3:
             break
 
     indexes = np.where(survivor == 1)[0] #Finds the indexes of the sections that survived
