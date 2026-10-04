@@ -29,7 +29,7 @@ def norm_lin(wave, flux, lim_inf_spec, lim_sup_spec):
     
     while True:
 
-        too_far=np.argmax(stdvs) 
+        too_far=np.argmax(work) 
         survivor[too_far] = 0
         work[too_far]=0
         if np.sum(survivor) < 3:
@@ -38,8 +38,8 @@ def norm_lin(wave, flux, lim_inf_spec, lim_sup_spec):
     indexes = np.where(survivor == 1)[0] #Finds the indexes of the sections that survived
 
     #linear model
-    flux_values = np.concatenate(flux_sect[i] for i in indexes) 
-    wave_values = np.concatenate(wave_sect[i] for i in indexes)
+    flux_values = np.concatenate([flux_sect[i] for i in indexes]) 
+    wave_values = np.concatenate([wave_sect[i] for i in indexes])
 
     line_coefs = np.polyfit(wave_values, flux_values, 1) 
     flux_linmodel = np.polyval(line_coefs, wave) #Finds the linear model of the flux values
