@@ -12,31 +12,29 @@ def ew_gauss(wave_l, flux_norm):
     Returns:
     - flux_fit: Array with the modeled flux values (in the original scale, continuum at 1.0).
     """
-    # 1. Inverte a linha de absorção para trabalhar com um pico positivo a partir do zero
+    # Inverts the flux values (so the peak is upwords)
     flux_inv = 1.0 - flux_norm
     
-    # 2. Estimativas iniciais (guesses)
+    # Conditions for Inicial Guesses
     amp = np.max(flux_inv)
     fwhm_level = amp / 2.0
-    
-    # Isola o núcleo da linha para estimar a posição central e a largura
     wave_gauss = wave_l[flux_inv >= fwhm_level]
     
     if len(wave_gauss) > 1:
         mu = np.mean(wave_gauss)
         stdv = np.std(wave_gauss, ddof=1)
     else:
-        # Fallback de segurança caso a janela seja muito estreita ou com ruído
+        # Fallback in case window is way too small or contains too much noise
         mu = wave_l[np.argmax(flux_inv)]
         stdv = max(0.1 , (wave_l[-1] - wave_l[0]) / 20) 
 
-    # 3. Definição do modelo e ajuste (fitting)
+    # model fit -- Gaussian 
     gauss_model = models.Gaussian1D(amplitude=amp, mean=mu, stddev=stdv)
     fit_g = fitting.LevMarLSQFitter()
     gauss_fit = fit_g(gauss_model, wave_l, flux_inv)
+    
+    #intrgal calculation of W_lambda := ew
+    amp_fit , stdv_fit= gauss_fit.amplitude.value, gauss_fit.stddev.value
+    ew=amp_fit * stdv_fit * np.sqrt(2 * np.pi)   
 
-    # 4. Reconverte a gaussiana ajustada para o fluxo normalizado (com contínuo em 1.0)
-    flux_fit = 1.0 - gauss_fit(wave_l)
-
-    # Retorna o modelo (para extrair parâmetros) e o array (para desenhar o gráfico)
-    return flux_fit
+    return ew
