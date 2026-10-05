@@ -3,8 +3,6 @@ import numpy as np
 This funnction automatically normalizes the flux in a specific spectal zone using a linear regression.
 Function stucture: <wave> <flux> <lim_min_spec> <lim_sup_spec> <cuts:Optional>
 Up to now, it onlies uses 3 sections out of the #cuts passed by the user/ set to default.
-The reason of using 3 sections resides in the fact of trying to maximize the chances of having two section on different ends of
-the spectral zone chosen
 '''
 def norm_lin(wave, flux, lim_inf_spec, lim_sup_spec,cuts=10):
 
