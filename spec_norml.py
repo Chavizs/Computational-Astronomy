@@ -31,14 +31,14 @@ def norm_lin(wave, flux, lim_inf_spec, lim_sup_spec,cuts=10):
 
     survivor=np.ones(cuts) #Masks the interesting intervals
     work=stdvs.copy() #Creates a copy of the stdvs array to work with (allows to keep the original stdvs in case of study the stdvs of sections)
+    half_cuts=cuts//2
 
-    while True:
-        too_far=np.argmax(work) 
+    for low, high in [(0, half_cuts), (half_cuts, cuts)]:
+        while survivor[low:high].sum() > 2:
 
-        survivor[too_far] = 0 
-        work[too_far]=0
-        if np.sum(survivor) <= 3: 
-            break
+            worst = low + np.argmax(work[low:high])   #Reves the worst section (with the highest stdv)
+            survivor[worst] = False              
+            work[worst] = -np.inf #Ensures that will never use the same section
 
     indexes = np.where(survivor == 1)[0] #Finds the indexes of the sections that survived
 
