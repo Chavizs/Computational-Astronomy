@@ -80,19 +80,27 @@ def hdus(file_path):
 
     '''
     Extracts the wavelength and flux from the FITS file and returns them as numpy arrays
+    Checks if the .fits files provided have either only the Primary HDU or more
     '''
+    with fits.open(file_path) as hduls:
+        #if only has the Primary HDU with flux values
+        if len(hduls) == 1:
+            flux = hduls[0].data.astype(float)
+            hdr = hduls[0].header
+            wave = hdr["CRVAL1"] + (np.arange(flux.size) + 1 - hdr["CRPIX1"]) * hdr["CDELT1"]
 
-    data = fits.getdata(file_path)
+        #If it is in the standart form
+        else:
+            
+            data = fits.getdata(file_path)
+            flux = np.array(data["FLUX"], dtype=float)
+            #Check the way the wavelength is stored in the FITS file, as it can be either "WAVE" or "WAVELENGTH"
+            try:
+                wave = np.array(data["WAVE"], dtype=float)
+            except KeyError:
+                wave = np.array(data["WAVELENGTH"], dtype=float)
+    return (wave, flux)
 
-    #Check the way the wavelength is stored in the FITS file, as it can be either "WAVE" or "WAVELENGTH"
-    try:
-        flux=np.array(data["FLUX"])
-        wave=np.array(data["WAVE"])
-    except:
-        flux=np.array(data["FLUX"])
-        wave=np.array(data["WAVELENGTH"])
-
-    return (wave,flux)
 
 
 def plotting(wave,flux,center,rng=500,normalize=None):
