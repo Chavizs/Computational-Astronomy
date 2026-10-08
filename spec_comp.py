@@ -62,7 +62,7 @@ def hdus(file_path1,file_path2):
 
     return (wave1,flux1,wave2,flux2)
 
-def plotting(wave1,flux1,wave2,flux2,center,rng=500,normalize=None):
+def plotting(wave1,flux1,wave2,flux2,center,rng=5,normalize=None):
 
     #Filters
 
