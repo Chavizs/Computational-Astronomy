@@ -1,0 +1,39 @@
+def auto_measure(stars,lines,rng=3):
+    np.set_printoptions(legacy='1.25') #Removes the np.float64(number) 
+
+    '''
+    stars: array with the .fits of the stars
+    lines: array with lines
+    '''
+    ews=[]
+
+    #for all stars calculte the ew of all lines
+    for star in stars:
+        wave,flux = hdus(star)
+        ew_star=[]
+        for line in lines: 
+            lim_inf = line -rng/2
+            lim_sup=line + rng/2
+
+            mask = (wave > lim_inf) & ( wave <lim_sup )
+
+            wave_m=wave[mask]
+            flux_m=flux[mask]
+
+            flux_n=norm_lin(wave_m,flux_m,lim_inf,lim_sup)
+
+            ew=ew_gauss(wave_m,flux_n)
+            ew_star.append(ew)
+        ews.append(ew_star)
+
+
+    return ews
+
+stars=("HD750_rv.fits","HD69655_rv.fits","HD967_rv.fits")
+lines=[5956.70, 5916.26,6481.88, 5054.65, 5905.68, 
+      6027.06, 5965.84, 5978.55,5977, 5727, 6521.83, 
+    6721.85]
+
+ews=auto_measure(stars,lines)
+for i in range(0,len(stars)):
+    print(stars[i],"\n",ews[i],"\n","Amount of lines analised:",len(ews[i]),"\n")
