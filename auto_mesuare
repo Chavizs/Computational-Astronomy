@@ -1,39 +1,66 @@
-def auto_measure(stars,lines,rng=3):
-    np.set_printoptions(legacy='1.25') #Removes the np.float64(number) 
+import numpy as np
+from espectro import hdus
+from EW import norm_lin,ew_gauss
+import re
+from pathlib import Path
+import pandas as pd
+import warnings
 
+def files(folder_path, stars_csv):
+    folder = Path(folder_path)
+    df = pd.read_csv(stars_csv)
+    df["Stars"] = df["Stars"].astype(str).str.strip()
+
+    map_fits = {fil.name: fil for fil in folder.rglob("*_rv.fits")}
+
+    paths = df["Stars"].map(lambda s: map_fits.get(f"{s}_rv.fits"))
+    found = paths.notna()
+
+    if (~found).any():
+        print("Não encontradas:", list(df.loc[~found, "Stars"]))
+
+    df_found = df[found].copy()
+    df_found["path"] = [str(p) for p in paths[found]]
+    return df_found  # colunas: Stars, Teff, path
+
+def auto_measure(df_found, lines):
     '''
-    stars: array with the .fits of the stars
-    lines: array with lines
+    df_found: DataFrame com as colunas Stars, Teff, path
+    lines: dict {comprimento de onda: largura da janela (rng)}
+    Devolve (df com uma coluna por risca, dict com os casos suspeitos)
     '''
-    ews=[]
+    ews = []
+    strange = {}
 
-    #for all stars calculte the ew of all lines
-    for star in stars:
-        wave,flux = hdus(star)
-        ew_star=[]
-        for line in lines: 
-            lim_inf = line -rng/2
-            lim_sup=line + rng/2
+    for star, path in zip(df_found["Stars"], df_found["path"]):
+        wave, flux = hdus(path)
+        ew_star = []
 
-            mask = (wave > lim_inf) & ( wave <lim_sup )
+        for line, rng in lines.items():
+            lim_inf = line - rng/2
+            lim_sup = line + rng/2
 
-            wave_m=wave[mask]
-            flux_m=flux[mask]
+            mask = (wave > lim_inf) & (wave < lim_sup)
+            wave_m = wave[mask]
+            flux_m = flux[mask]
 
-            flux_n=norm_lin(wave_m,flux_m,lim_inf,lim_sup)
+            try:
+                flux_n = norm_lin(wave_m, flux_m, lim_inf, lim_sup)
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter("always")
+                    ew = ew_gauss(wave_m, flux_n)[0]
 
-            ew=ew_gauss(wave_m,flux_n)
+                if (ew <= 0) or (ew > 1) or w:              # EW fora do intervalo plausível (Å)
+                    strange[(star, line)] = f"Poor Gaussian fit: {ew}"
+
+            except Exception as error:
+                ew = np.nan
+                strange[(star, line)] = f"erro: {error}"
+
             ew_star.append(ew)
         ews.append(ew_star)
 
+    cols = [f"{l:.2f}" for l in lines]
+    df_ew = pd.DataFrame(ews, columns=cols, index=df_found.index)
 
-    return ews
-
-stars=("HD750_rv.fits","HD69655_rv.fits","HD967_rv.fits")
-lines=[5956.70, 5916.26,6481.88, 5054.65, 5905.68, 
-      6027.06, 5965.84, 5978.55,5977, 5727, 6521.83, 
-    6721.85]
-
-ews=auto_measure(stars,lines)
-for i in range(0,len(stars)):
-    print(stars[i],"\n",ews[i],"\n","Amount of lines analised:",len(ews[i]),"\n")
+    return pd.concat([df_found, df_ew], axis=1), strange
