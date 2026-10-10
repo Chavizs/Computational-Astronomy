@@ -68,14 +68,41 @@ def auto_measure(df_found, lines, out_csv="Stars_EW.csv"):
     
     return df_out, strange
 
-def sensitivity(df_found):
-    for line in np.array(df_found.columns)[3:]:
+def sensitivity(df_found, ew_max=1.0, ep=None):
+    '''
+    This functions quantifies how the lines choosen depend on temperature
+    
+    Arguments:
+    - df_found: Data Frame that was obtained in the past functions
+    - ew_max : Maximum Equivalent Width acceptable (ortherwise will be removed)
+    -ep : Excitattion Potencial
 
-        ews=np.array(df_found[line])
-        temps=np.array(df_found["Teff"].astype(float))
+    Returns:
+    - Table with the lines, coeficients of the statistical analiliys and the ep.
+    The lines are in descending order: More Temperature dependent to least dependent
+    '''
+    #Esctrascts lines (in an array) and the Teff
+    lines = np.array(df_found.columns)[3:]
+    teff_all = df_found["Teff"].astype(float)
+    
+    rows = []
+    for line in lines:
+        ew = df_found[line].astype(float)
+        ok = ew.notna() & (ew > 0) & (ew < ew_max)
+        x, y = teff_all[ok], ew[ok] * 1000
 
-        plt.scatter(temps,ews)
-        plt.title(f"{line} Sensitivity with Temperature")
-        plt.xlabel("Teff")
-        plt.ylabel("EW")
-        plt.show()
+        if len(x) < 5:
+            print(f"{line}: só {len(x)} pontos válidos, ignorada")
+            continue
+
+        slope = np.polyfit(x, y, 1)[0]
+        rho = x.corr(y, method="spearman")
+        change = slope * (x.max() - x.min()) / y.mean()
+
+        rows.append({"line": float(line), "N": len(x), "rho": rho,
+                     "slope_mA_per_K": slope, "rel_change": change,
+                     "EP": ep.get(float(line)) if ep else np.nan})
+
+    table = pd.DataFrame(rows)
+    table["abs_rho"] = table["rho"].abs()
+    return table.sort_values("abs_rho", ascending=False).reset_index(drop=True)
