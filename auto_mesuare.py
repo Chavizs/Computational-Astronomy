@@ -1,7 +1,7 @@
 import numpy as np
 from espectro import hdus
 from EW import norm_lin,ew_gauss
-import re
+import matplotlib.pyplot as plt
 from pathlib import Path
 import pandas as pd
 import warnings
@@ -23,7 +23,7 @@ def files(folder_path, stars_csv):
     df_found["path"] = [str(p) for p in paths[found]]
     return df_found  # colunas: Stars, Teff, path
 
-def auto_measure(df_found, lines):
+def auto_measure(df_found, lines, out_csv="Stars_EW.csv"):
     '''
     df_found: DataFrame com as colunas Stars, Teff, path
     lines: dict {comprimento de onda: largura da janela (rng)}
@@ -62,5 +62,20 @@ def auto_measure(df_found, lines):
 
     cols = [f"{l:.2f}" for l in lines]
     df_ew = pd.DataFrame(ews, columns=cols, index=df_found.index)
+    df_out = pd.concat([df_found, df_ew], axis=1)
 
-    return pd.concat([df_found, df_ew], axis=1), strange
+    df_out.to_csv(out_csv, index=False) 
+    
+    return df_out, strange
+
+def sensitivity(df_found):
+    for line in np.array(df_found.columns)[3:]:
+
+        ews=np.array(df_found[line])
+        temps=np.array(df_found["Teff"].astype(float))
+
+        plt.scatter(temps,ews)
+        plt.title(f"{line} Sensitivity with Temperature")
+        plt.xlabel("Teff")
+        plt.ylabel("EW")
+        plt.show()
