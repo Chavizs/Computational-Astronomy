@@ -105,4 +105,8 @@ def sensitivity(df_found, ew_max=1.0, ep=None):
 
     table = pd.DataFrame(rows)
     table["abs_rho"] = table["rho"].abs()
-    return table.sort_values("abs_rho", ascending=False).reset_index(drop=True)
+    table = table.sort_values("abs_rho", ascending=False).reset_index(drop=True)
+
+    table.to_csv("Ranking_Lines_Calib.csv", index=False)
+
+    return table
