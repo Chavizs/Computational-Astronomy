@@ -112,4 +112,3 @@ def ratios(Stars_EW,pair, out_csv="Line_Ratios.csv"):
     return df
 
 
-
