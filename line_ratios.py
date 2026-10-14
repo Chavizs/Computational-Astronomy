@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from itertools import combinations
+import matplotlib.pyplot as plt
 
 
 def load_ep(path="ep_sousa.txt"):
@@ -110,5 +111,6 @@ def ratios(Stars_EW,pair, out_csv="Line_Ratios.csv"):
     df = pd.concat([ews[meta], pd.DataFrame(novos)], axis=1)
     df.to_csv(out_csv, index=False)
     return df
+
 
 
