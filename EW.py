@@ -27,7 +27,7 @@ def ccf(wave,flux,t_wave,t_flux,rmin=-25,rmax=25):
     rv, Ccf = crosscorrRV(wave,flux, t_wave, t_flux, rmin, rmax, drv=0.5)
     rv_ideal =rv[np.argmax(Ccf)]
 
-    wave = wave(1+rv_ideal/c_light)
+    wave = wave*(1+rv_ideal/c_light)
 
     #Returns the corrected wavelenght array
     return wave 
