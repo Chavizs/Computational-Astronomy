@@ -12,6 +12,8 @@ def estimar_teff(fits_path, cal_csv="Calibration.csv", nsigma=2.5):
     #Loads the data to be used: Calibration and the data in the .fist file 
     cal = pd.read_csv(cal_csv)
     wave, flux = hdus(fits_path)
+    ### FALATA CORRIGIR A VELOCIDADE RADIAL
+    ###
     wave, flux = np.ravel(wave).astype(float), np.ravel(flux).astype(float)
 
     # 1) EW de cada risca, medida uma só vez (mesma lógica do auto_measure)
