@@ -4,6 +4,8 @@ from astropy.constants import c as c_light
 from PyAstronomy.pyasl import crosscorrRV
 from scipy.optimize import curve_fit
 
+c_light= c_light.to("km/s").value()
+
 '''
 This file contains the functions for the calculation of the equivalent width (EW).
 '''
