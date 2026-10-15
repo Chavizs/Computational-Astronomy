@@ -9,33 +9,40 @@ def estimar_teff(fits_path, cal_csv="Calibration.csv", nsigma=2.5):
     Devolve (res, est): res = dict(Teff, sigma, n_antes, n_depois);
                         est = DataFrame com o valor do rácio e a Teff de cada rácio.
     '''
+    #Loads the data to be used: Calibration and the data in the .fist file 
     cal = pd.read_csv(cal_csv)
     wave, flux = hdus(fits_path)
     wave, flux = np.ravel(wave).astype(float), np.ravel(flux).astype(float)
 
     # 1) EW de cada risca, medida uma só vez (mesma lógica do auto_measure)
+    
     janelas = {}
+    #Getting the range used during the calibation to perform the gaussian fit
     for _, c in cal.iterrows():
         janelas[round(c["line_1"], 2)] = c["rng_1"]
         janelas[round(c["line_2"], 2)] = c["rng_2"]
 
+    #EW's computation
     ews = {}
     for line, rng in janelas.items():
         lim_inf, lim_sup = line - rng / 2, line + rng / 2
         m = (wave > lim_inf) & (wave < lim_sup)
         try:
             flux_n = norm_lin(wave[m], flux[m], lim_inf, lim_sup)
+            #Discards bad fits
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
                 out = ew_gauss(wave[m], flux_n)
+                
             ew = out[0] if isinstance(out, tuple) else out          # aceita ew ou (ew, flux_fit)
             fit_warn = [wi for wi in w if issubclass(wi.category, (RuntimeWarning, UserWarning))
                         and "deprecat" not in str(wi.message).lower()]
             ews[line] = ew if (np.isfinite(ew) and 0 < ew <= 1 and not fit_warn) else np.nan
+            
         except Exception:
             ews[line] = np.nan
 
-    # 2) rácios e Teff por rácio (sem extrapolar fora do intervalo calibrado)
+    # 2) Ratio and Teff for each fit in the calibration (sem extrapolar fora do intervalo calibrado)
     linhas = []
     for _, c in cal.iterrows():
         ew1, ew2 = ews[round(c["line_1"], 2)], ews[round(c["line_2"], 2)]
