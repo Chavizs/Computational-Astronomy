@@ -4,7 +4,7 @@ from astropy.constants import c as c_light
 from PyAstronomy.pyasl import crosscorrRV
 from scipy.optimize import curve_fit
 
-c_light= c_light.to("km/s").value
+
 
 '''
 This file contains the functions for the calculation of the equivalent width (EW).
@@ -13,7 +13,11 @@ This file contains the functions for the calculation of the equivalent width (EW
 # <script> <wave> <flux> <lim_min_spec> <lim_sup_spec>
 
 #Correction of the spectrum radial velocity
-def ccf(wave,flux,t_wave,t_flux,rmin=-25,rmax=25):
+
+
+def ccf(wave, flux, w_min=5700, w_max=6000, template="sun_harps_ganymede.fits",
+        rmin=-25, rmax=25, margem=2.0):
+            
     '''
     Computes the Cross-Correlation Function (CCF) using the crosscorRV function from PyAstronomy.
 
@@ -25,14 +29,20 @@ def ccf(wave,flux,t_wave,t_flux,rmin=-25,rmax=25):
     
     Returns: the corrected spectrum (based on Doopler effect)
     '''
-    #dv = np.linspace(rmin,rmax, int((rmax-rmin)/0.5)) #Velocity range for the CCF, with a step of 0.5 km/s
-    rv, Ccf = crosscorrRV(wave,flux, t_wave, t_flux, rmin, rmax, drv=0.5)
-    rv_ideal =rv[np.argmax(Ccf)]
+    
+    wave, flux = np.asarray(wave).ravel(), np.asarray(flux).ravel()
+    t_wave, t_flux = hdus(template)
+    t_wave, t_flux = t_wave.ravel(), t_flux.ravel()
 
-    wave = wave/(1+rv_ideal/c_light)
+    m  = (wave   > w_min) & (wave   < w_max)                    # estrela: janela exata
+    mt = (t_wave > w_min - margem) & (t_wave < w_max + margem)  # template: janela + margem
 
-    #Returns the corrected wavelenght array
-    return wave 
+    rv, Ccf = crosscorrRV(wave[m], flux[m], t_wave[mt], t_flux[mt],
+                          rmin, rmax, drv=0.5)
+    rv_ideal = rv[np.argmax(Ccf)]
+
+    return wave / (1 + rv_ideal / c_light.to("km/s").value)
+
 
 #Flux normalization
 def norm_lin(wave, flux, lim_inf_spec, lim_sup_spec,cuts=10):
