@@ -21,3 +21,66 @@ lines={6173.34:3, 6358.68:3, 6380.75:3, 5987.07:3, 5775.08:3, 5787.92:3,
         5653.87:2 ,5667.52:1 ,  5679.03:2, 5701.55:2 , 5715.09:1 , 5731.77:2 ,  5741.85:2, 5752.04:2,  5775.08:2,  5778.46:2, 
         5806.73:2, 5809.22:2,  5852.22:2, 5856.09:2 , 5862.36:2, 5905.68:2, 5916.26:2, 5927.79:2, 5934.66:2, 5956.70:2, 5983.69:2, 
         5984.82:2, 5987.07:2, 6005.55:2, 6024.06:2, 6027.06:2, 6056.01:2, 6065.49:2, 6082.72:2, 6096.67:2, 6127.91:2, 6157.73:2 }
+
+STEEW
+Stelar Temperature Estimator by Equivalent Width
+
+The main goal of this script is to estimate the effective temperature of solar type stars. This project was developed in the contex of the Computacional Astronomy coursework from the Bachelor’s degree  in Physics.
+
+Required Files
+
+In order for this script to work properly, the user must have the calibation document (Calibration.csv & Calibration_CV.csv) , the HARPS template ( created by profesor Sergio ) and the .fits documnet(s) to be analised, all in the same folder. It is expected that the user will only use spectrums collected by HARPS. If the user opts to use anyother spectrum collected by other istrument the radial velocity correction will be poorly done , resulting in a spectrum that still contains strong traces of the Doopler effect.
+
+Note: Up to now, this script only analyses one star at time. That is, only one .fits document is accepeted as input.
+
+Structure 
+
+In this project, the equivalent widths are calculated by fitting an gaussian to the spectral lines defined (such is done by the ew_gauss function)
+As will be discussed later, the ew_gauss funtion only evaluates isolated specral lines. 
+Therefore, the following python dictionary contais all the spectral lines identified as aproximatly isolated. The keys are the spectral lines and the values are the range used in the gaussian fit.
+
+
+In order to correct the Doopler effect it is used ARSE's  Template for HARPS' spectrums
+
+======================================
+   Description of the methods used
+======================================
+
+- EW.py
+
+This python fyle containing all functions used to compute the the equivalent width of a isolated line.
+
+Inside it, one finds the function used to: 
+. correct the spectrum of the star due to the Doopler effect (ccf) ;  
+. normalizes the spectral region of the isolated absroption line ; 
+. function used to estimate its equivalent width by fitting a gaussian.
+
+
+. Normalization Function 
+
+This process is based in a linear normalization (fitting a line thought the spectrum)
+This function divides the spectral window centered at the line in 30 intervals (in an uniform fashion). It is calculated the standert deviation of each section and only 4 (2 in each end of the spectal window provided) out of the 30 initial sections are used to perform the linear fit. This linear fit will be used as the line of maximum values for the flux at each wavelength.
+
+Return the flux normalized
+
+ . ccf Function
+
+ This function is responsible for correcting the radial velocity of the star. It uses the CrossCorrRV function from PyAstronomy. 
+ It requires : 
+ - (Optional) wave, flux in the region to be analysed
+ - (!) t_wave , t_flux : wavelength and flux from the template model
+ - (Optional) rv_min, rv_max : minimum and maximum radial velocity interval
+ - (Optional) drv: step for the radial velocity
+
+Returns an array with the correct values of wavelength
+
+ . ew_fit Function
+
+This function is responsible to perform the gaussian fit of each the spectral line.
+
+Arguments:
+- center of the absorption line
+- size of the window (region of the spectrum around the line)
+- wave , flux arrays Corrected from Doopler effect and normalized
+
+It uses LMFit , however, it has a fallback method built in. That is, if the user doesn't have LMFit, it will use polyfit from numpy to perform the gaussian fit.
