@@ -1,4 +1,4 @@
-
+#%%
 import numpy as np
 import lmfit
 import pandas as pd
@@ -19,6 +19,7 @@ P = 0.813475
 def model_rv(t, gamma, K, T0, P):
     return gamma - K*np.sin(2*np.pi*(t - T0)/P)
 
+#Data from Coralie
 df_rv = pd.read_csv("rv_clean.csv")
 
 t_rv = df_rv["rjd"].values     
@@ -29,7 +30,9 @@ phase=df_rv["RV_PH"]
 gamma0 = np.mean(rv)
 K0 = (np.max(rv) - np.min(rv))/2
 
+#-----------
 #FIT - lmfit
+#-------------
 model = lmfit.Model(model_rv)
 params = model.make_params(gamma=gamma0, K=K0, T0=T0, P=P)
 params["T0"].vary = False
@@ -37,16 +40,17 @@ params["P"].vary = False
 
 result = model.fit(rv, params, t=t_rv, weights=1/err_rv)
 #print(result.fit_report())
+#Parameters obtained and their respective error associated
+gamma, err_gamma =result.params["gamma"].value, result.params["gamma"].stderr
+K, err_K=result.params["K"].value, result.params["K"].stderr
 
-gamma=result.params["gamma"].value
-K=result.params["K"].value
-
-data_fit=pd.DataFrame({"gamma": gamma, "K": K, "T0": T0, "P": P},index=[0])
+data_fit=pd.DataFrame({"gamma": gamma, "err_gamma":err_gamma, "K": K, "err_K":err_K, "T0": T0, "P": P},index=[0])
 data_fit.to_csv("rv_fit_params.csv", index=False)
 
 
-
+#-----------
 #Plotting
+#----------
 t=np.linspace(np.min(t_rv),np.max(t_rv), 1000) #new test t_rv
 rv_fit=model_rv(t,gamma,K,T0,P) #Calculated radial velocities
 
@@ -71,4 +75,22 @@ plt.savefig(f"Model_RV.png", dpi=200, bbox_inches="tight")
 
 plt.show()
 
+#Residues
+
+ress=rv-model_rv(t_rv, gamma,K,T0,P)
+
+plt.scatter(phase,ress)
+plt.title("Resíduos do ajuste da velocidade radial")
+plt.xlabel("Phase")
+plt.ylabel("Resíduos da velocidade radial [m/s]")
+plt.legend()
+plt.savefig(f"ress_rv.png", dpi=200, bbox_inches="tight")
+plt.show()
+
+
+
+
+
+
+#%%
 
