@@ -1,4 +1,4 @@
-
+#%%
 '''
 Programa para obter os dados e gráficos de fase e no tempo
 '''
@@ -124,12 +124,13 @@ def main():
 
     #Periods
     epochs = np.unique(np.round(E_time).astype(int))
+    epoch_time = np.round(E_time).astype(int)
     T_t = T0 + epochs * P
 
     #Data analysed
-    data_flux={"TIME":t_cln, "FLUX":flux_cln, "ERR_FLUX":err_flux_cln, "FLUX_PH":phase_time}
+    data_flux={"TIME":t_cln, "FLUX":flux_cln, "ERR_FLUX":err_flux_cln, "FLUX_PH":phase_time,"EPOCH":epoch_time,}
     data_rv={"rjd":tv, "vrad":rv, "svrad":err_rv, "RV_PH":phase_rv}
-    data_tt={"T_t":T_t}
+    data_tt   = {"EPOCH":epochs, "T_t":T_t}
 
     df_flx=pd.DataFrame(data_flux)
     df_rv=pd.DataFrame(data_rv)
@@ -145,3 +146,6 @@ def main():
 if __name__ == "__main__":
      main()
 
+
+
+# %%
