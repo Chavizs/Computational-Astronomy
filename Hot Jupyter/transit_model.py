@@ -92,8 +92,8 @@ plt.show()
 epocas = np.unique(epoca.astype(int))
 n_in = [np.sum(np.abs(t_obs - (T0 + E*P)) < 0.0483/2) for E in epocas]
 
-E_esc = epocas[np.argmax(n_in)]               # ou escolhe à mão uma época da lista
-Tt    = T0 + E_esc * P                        # agora é um escalar
+E_esc = epocas[np.argmax(n_in)]               
+Tt    = T0 + E_esc * P                        
 
 sel = np.abs(t_obs - Tt) < 0.1                # só os pontos deste trânsito
 plt.plot(t_obs[sel] - Tt, flux_cln[sel], 'k.', label='Dados')
@@ -124,14 +124,14 @@ def residuos(params, t, flux, f_err):
 
 params_lm = lmfit.Parameters()
 params_lm.add('t0',  value=T0, vary=False) #Fixar o T0
-params_lm.add('per', value=P, vary=False) #Fixar o Periodo
+params_lm.add('per', value=P) #Fixar o Periodo
 params_lm.add('rp',  value=rp,   min=0, max=1)
-params_lm.add('a',   value=a_Rs, min=1, vary=False) #Fixar o semi-eixo maior
-params_lm.add('inc', value=82.6, max=90, vary=False) #Fixar a inclinação
+params_lm.add('a',   value=a_Rs, min=1,) 
+params_lm.add('inc', value=82.6, max=90, ) #Fixar a inclinação
 params_lm.add('ecc', value=0. , vary=False)
 params_lm.add('w',   value=90. , vary=False )
-params_lm.add('u1',  value=0.5593)
-params_lm.add('u2',  value=0.0908)
+params_lm.add('u1',  value=0.5593,  vary=False)
+params_lm.add('u2',  value=0.0908,  vary=False)
 
 result = lmfit.minimize(residuos, params_lm, args=(t_obs, flux_cln, err_flux_cln))
 print(lmfit.fit_report(result))
